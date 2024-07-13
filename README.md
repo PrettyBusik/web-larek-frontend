@@ -1,17 +1,71 @@
+# Проектная работа "Веб-ларек"
+
+Стек: HTML, SCSS, TS, Webpack
+
+Структура проекта:
+- src/ — исходные файлы проекта
+- src/components/ — папка с JS компонентами
+- src/components/base/ — папка с базовым кодом
+
+Важные файлы:
+- src/pages/index.html — HTML-файл главной страницы
+- src/types/index.ts — файл с типами
+- src/index.ts — точка входа приложения
+- src/styles/styles.scss — корневой файл стилей
+- src/utils/constants.ts — файл с константами
+- src/utils/utils.ts — файл с утилитами
+
+## Установка и запуск
+Для установки и запуска проекта необходимо выполнить команды
+
+```
+npm install
+npm run start
+```
+
+или
+
+```
+yarn
+yarn start
+```
+## Сборка
+
+```
+npm run build
+```
+
+или
+
+```
+yarn build
+```
+
+# Об архитектуре
+Класс **EventEmitter** используется для управления событиями в различных компонентах.
+Класс **RestApi** используется  для выполнения запросов к серверу.
+Интерфейсы данных описывают структуру типов, которые используются в приложении.
+Модели описывают в себе бизнес-логику приложения изолированно от движка.
+Представления дают возможность отображать информацию так, чтобы скрыть детали реализации движка от бизнес-логики.
+Эта архитектура предоставляет структурированный подход к разработке клиентской части веб-приложения, обеспечивая модульность, переиспользуемость и управляемость кода.
+
+Модели и представления общаются друг в другом через события при помощи класса EventEmitter.
 # Документация
 
 ## Типы данных
 
 ### Основные типы данных
 
+Эти типы данных используются повсеместно в проекте и являются общими.
+
 ```typescript
-export type TProductCategory = 'софт-скил' | 'кнопка' | 'другое' | 'дополнительное' | 'хард-скил'
+type TProductCategory = 'софт-скил' | 'кнопка' | 'другое' | 'дополнительное' | 'хард-скил'
 ```
 
 Представляет варианты значения для типа товара
 
 ```typescript
-export interface IProduct {
+interface IProduct {
     id: string
     description: string
     image: string
@@ -24,7 +78,7 @@ export interface IProduct {
 Представляет информацию о товаре
 
 ```typescript
-export interface IOrder {
+interface IOrder {
     id: string
     totalPrice: number
 }
@@ -35,47 +89,96 @@ export interface IOrder {
 ### Вспомогательные типы данных
 
 ```typescript
-export type TPaymentType = 'онлайн' | 'при получении'
+type TPaymentType = 'онлайн' | 'при получении'
 ```
 
-Представляет варианты значения для способов оплаты
+Представляет варианты значения для способов оплаты. Используется в форме создания заказа.
 
 ```typescript
-export interface IDeliveryAndPayment {
+interface IDeliveryAndPayment {
     paymentType: TPaymentType
     address: string
 }
 ```
 
-Представляет информацию о способе оплаты и адресе доставки (первый шаг формы оформления заказа)
+Представляет информацию о способе оплаты и адресе доставки. Используется в форме создания заказа на первом шаге.
 
 ```typescript
-export interface IContacts {
+interface IContacts {
     email: string
     phone: string
 }
 ```
 
-Представляет информацию о контактах (второй шаг формы оформления заказа)
+Представляет информацию о контактах. Используется в форме создания заказа на втором шаге.
 
 ```typescript
-export interface IOrderCreationData extends IDeliveryAndPayment, IContacts {
+interface IOrderCreationData extends IDeliveryAndPayment, IContacts {
     products: IProduct[]
 }
 ```
 
-Представляет информацию об оформляемом заказе (данные формы оформления заказа)
+Представляет информацию об оформляемом заказе. Используется для передачи данных из формы оформления заказа через API на сервер.
 
 ```typescript
-export type TValidationErrors<T> = Partial<Record<keyof T, string>>
+type TValidationErrors<T> = Partial<Record<keyof T, string>>
 ```
 
-Представляет собой информацию об ошибках валидации
+Представляет собой информацию об ошибках валидации. Универсальный тип для использования в форме оформления заказа на обоих шагах.
+
+## Сервисы
+
+#### Сервис `RestApi`
+
+Это класс для взаимодействия с серверным API.
+
+```typescript
+class RestApi extends Api {
+    /**
+     * Поле в котором храниться базовый url для всех медий-файлов чтобы методы возвращали абсолютные ссылки на изображения
+     */
+    private readonly cdn: string;
+
+    /**
+     * Констректор.
+     * Вызывает базовый конструктор чтобы настроить url сервера для отправки запросов.
+     * Так же дополнительно принимает базовый url медиа файлов
+     */
+    constructor(cdn: string, baseUrl: string, options?: RequestInit) {
+        super(baseUrl, options);
+        this.cdn = cdn;
+    }
+    
+    /**
+     * Получает с сервера информацию о товаре по его id
+     */
+    getProduct(id: number):Promise<IProduct> { }
+    
+    /**
+     * Получает с сервера список товаров
+     */
+    getProductsList(): Promise<IProduct[]> { }
+
+    /**
+     * Отправляет на сервер инфомрацию для создания заказа. В ответ возвращает объект созданного заказа
+     */
+    createOrder(data: IOrderCreationData): Promise<IOrder> { }
+}
+```
 
 ## Модели
 
+#### Модель `CatalogModel`
+
+Модель содержит в себе текущее состояние каталога товаров.
+
 ```typescript
-export class CatalogModel {
+import {IProduct} from "./index";
+
+class CatalogModel {
+    /**
+     * Список товаров, которые сейчас необходимо отобразить в каталоге
+     */
     private productsList: IProduct[] = []
 
     /**
@@ -87,13 +190,23 @@ export class CatalogModel {
      * Метод для получения из модели списка товаров
      */
     set products(products: IProduct[]) { }
+
+    /**
+     * Метод для получения из модели одного товара по его id
+     */
+    getProduct(id: number): IProduct{ }
 }
 ```
 
-Модель содержит в себе текущее состояние каталога товаров
+#### Модель `CartModel`
+
+Модель содержит в себе текущее состояние корзины
 
 ```typescript
-export class CartModel {
+class CartModel {
+    /**
+     * Список товаров, которые пользователь добавил в корзину
+     */
     private productsList: IProduct[] = []
 
     /**
@@ -115,18 +228,31 @@ export class CartModel {
      * Удаляет указанный товар из корзины
      */
     removeProduct(product: IProduct): void { }
+
+    /**
+     * Возвращает список id товаров, которые находятся в корзине
+     */
+    getProductIds(): number[] { }
 }
 ```
 
-Модель содержит в себе текущее состояние корзины
+
+### Модель `OrderFormModel`
+
+Модель для работы формы оформления заказа
 
 ```typescript
-export class OrderFormModel {
+class OrderFormModel {
     /**
-     * Устанавливает в модель информацию о списке товаров, выбранных для покупки и их
+     * Текущая информация о достаке и оплате из формы
      */
-    set products(data: IProduct[]) { }
-
+    private deliveryAndPaymentData: IDeliveryAndPayment
+    
+    /**
+     * Текущая информация о контактах из формы
+     */
+    private contactsData: IContacts
+    
     /**
      * Устанавливает в модель информацию о способе доставки и оплате
      */
@@ -154,14 +280,27 @@ export class OrderFormModel {
 }
 ```
 
-Модель для работы формы оформления заказа
 
 ## Представления
 
-### Базовые представления
+### Общие представления
+
+#### Представление `BaseView`
+
+Базовое представление. Абстрактный родитель всех представлений, содержащий в себе общий функционал.
 
 ```typescript
-export abstract class BaseView{
+abstract class BaseView {
+    /**
+     * HTML нода, которая является внешней для верстки данного представляения
+     */
+    protected container: HTMLElement
+
+    /**
+     * Менеджер событий для взаимодействия с остальной частью приложения
+     */
+    protected eventsManager: EventEmitter
+    
     /**
      * Констурктор принимает html верстку для представления и объект менеджера событий
      */
@@ -174,10 +313,26 @@ export abstract class BaseView{
 }
 ```
 
-Базовое представление
+#### Представление `ModalView`
+
+Представление для работы модельного окна. Позволяет размещать внутри любую информацию и управлять видимостью попапа независимо от содержимого
 
 ```typescript
-export abstract class BaseModalView extends BaseView {
+class ModalView extends BaseView {
+    /**
+     * Кнопка закрытия модельного окна
+     */
+    private closeButton: HTMLButtonElement;
+    /**
+     * Содержимое модального окна
+     */
+    private content: BaseView
+
+    /**
+     * Устанавливает представление, которое должно быть отрендерино внутри этого модельного окна.
+     */
+    set content(view: BaseView) { }
+    
     /**
      * Показыает окно (делает его видимым)
      */
@@ -190,23 +345,74 @@ export abstract class BaseModalView extends BaseView {
 }
 ```
 
-Базовое представление для всплывающих окон
 
 ### Представления каталога
 
-```typescript
-export class CatalogItemView extends BaseView{
-    /**
-     * Устанавливает товар, который это представление должно отображать и который должно пробрасывать в события
-     */
-    set product(product: IProduct) { }
-}
-```
+#### Представление `CatalogItemView`
 
 Плитка одного товара в каталоге. Представляет информацию об одном товаре
 
 ```typescript
-export class CatalogView extends BaseView{
+class CatalogItemView extends BaseView{
+    /**
+     * HTML нода с заголовков товара
+     */
+    private title: HTMLElement
+    
+    /**
+     * HTML нода с описания товара
+     */
+    private description: HTMLElement
+
+    /**
+     * HTML нода с цены товара
+     */
+    private price: HTMLElement
+
+    /**
+     * HTML нода с картинкой товара
+     */
+    private image: HTMLImageElement
+
+    /**
+     * HTML нода с кнопкой "купить"
+     */
+    private byeButton: HTMLButtonElement
+    
+    /**
+     * Товар, который сейчас отображает представление
+     */
+    private _product: IProduct
+
+    /**
+     * Признак того, должно ли представлени отобажать полную информацию о товаре (с описанием и кропкой "купить") или же сокращенное (для списка товаров)
+     */
+    private isFull:boolean
+    
+    /**
+     * Устанавливает товар, который это представление должно отображать и который должно пробрасывать в события
+     */
+    set product(product: IProduct) { }
+
+
+    /**
+     * Сеттре для поля isFull
+     */
+    set showFullInfo(full: boolean) { }
+}
+```
+
+#### Представление `CatalogView`
+
+Каталог - список товаров в виде плиток
+
+```typescript
+class CatalogView extends BaseView{
+    /**
+     * Список представлений-товаров, которые должны отображаться внутри этого каталога
+     */
+    private content: CatalogItemView[]
+    
     /**
      * Устанавливает список предствлений-товаров, которые должны быть в этом каталоге
      */
@@ -214,23 +420,39 @@ export class CatalogView extends BaseView{
 }
 ```
 
-Каталог - список товаров в виде плиток
-
-```typescript
-export class ProductInformationView extends BaseModalView{
-    /**
-     * Устанавливает товар, который это представление должно отображать и который должно пробрасывать в события
-     */
-    set product(product:IProduct){ }
-}
-```
-
-Попап с полной информацией о товаре
-
 ### Представления корзины
 
+#### Представление `CartItemView`
+
+Строчка в корзине. Представляет информацию об одной конкретной позиции в корзине
+
 ```typescript
-export class CartItemView extends BaseView {
+class CartItemView extends BaseView {
+    /**
+     * HTML нода с заголовков товара
+     */
+    private titleNode: HTMLElement
+    /**
+     * HTML нода с порядковым номером товара в списке
+     */
+    private positionNode: HTMLElement
+    /**
+     * HTML нода с ценой товара
+     */
+    private priceNode: HTMLElement
+    /**
+     * HTML нода с кнопкой удаленния товара из корзины
+     */
+    private removeButtonNode: HTMLElement
+    /**
+     * Товар, который отображает данное представление
+     */
+    private _product: IProduct
+    /**
+     * Позиция в списке, которую отображает данное представление
+     */
+    private _position: number
+    
     /**
      * Устанавливает товар, который это представление должно отображать и который должно пробрасывать в события
      */
@@ -243,10 +465,26 @@ export class CartItemView extends BaseView {
 }
 ```
 
-Строчка в корзине. Представляет информацию об одной конкретной позиции в корзине
+#### Представление `CartView`
+
+Корзина
 
 ```typescript
-export class CartView extends BaseModalView {
+class CartView extends BaseView {
+    /**
+     * HTML нода с кнопкой "оформить"
+     */
+    private submitButtonNode:HTMLElement
+    /**
+     * Список представлений-товаров, которые должны отображаться внутри этой корзины
+     */
+    private content: CartItemView[]
+
+    /**
+     * Итоговая цена, которая должна отображаться
+     */
+    private price: number
+    
     /**
      * Устанавливает список предствлений-товаров, которые должны быть в этой корзине
      */
@@ -258,10 +496,23 @@ export class CartView extends BaseModalView {
     set totalPrice(totalPrice: number) { }
 }
 ```
-Попап с информацией о корзине и товарах в ней
+
+#### Представление `CartIconView`
+
+Иконка корзины в шапке сайта, которая отображает количество товаров в корзине
 
 ```typescript
-export class CartIconView extends BaseView {
+class CartIconView extends BaseView {
+    /**
+     * HTML нода с иконкой, на которой отображается число товаров
+     */
+    private counterNode: HTMLElement
+    
+    /**
+     * количество товаров
+     */
+    private _productsNumber: number
+    
     /**
      * Устанавливает количество товаров в корзине
      */
@@ -269,12 +520,19 @@ export class CartIconView extends BaseView {
 }
 ```
 
-Иконка корзины в шапке сайта, которая отображает количество товаров в корзине
-
 ### Представления оформления заказа
 
+#### Представление `BaseFormView`
+
+Базовое представление формы заказа. Общее для всех шагов оформления заказа
+
 ```typescript
-class BaseFormStemView extends BaseModalView {
+class BaseFormView extends BaseView {
+    /**
+     * HTML нода с кнопкой "далее"
+     */
+    private continuieButtonNode:HTMLElement
+    
     /**
      * Делает кнопку "далее" активной
      */
@@ -287,8 +545,21 @@ class BaseFormStemView extends BaseModalView {
 }
 ```
 
+#### Представление `DeliveryAndPaymentFormView`
+
+Первый шаг формы - ввод адреса и способа оплаты
+
 ```typescript
-class DeliveryAndPaymentFormView extends BaseFormStemView {
+class DeliveryAndPaymentFormView extends BaseFormView {
+    /**
+     * Текущие значения полей формы
+     */
+    private _data:IDeliveryAndPayment
+    /**
+     * Текущие ошибки валиадации
+     */
+    private _errors:TValidationErrors<IDeliveryAndPayment> | null
+    
     /**
      * Устанавливает значения полей формы
      */
@@ -301,10 +572,21 @@ class DeliveryAndPaymentFormView extends BaseFormStemView {
 }
 ```
 
-Первый шаг формы - ввод адреса и способа оплаты
+#### Представление `ContactsFormView`
+
+Второй шаг формы - ввод контактов
 
 ```typescript
-class ContactsFormView extends BaseFormStemView {
+class ContactsFormView extends BaseFormView {
+    /**
+     * Текущие значения полей формы
+     */
+    private _data:IContacts
+    /**
+     * Текущие ошибки валиадации
+     */
+    private _errors:TValidationErrors<IContacts> | null
+    
     /**
      * Устанавливает значения полей формы
      */
@@ -317,18 +599,23 @@ class ContactsFormView extends BaseFormStemView {
 }
 ```
 
-Второй шаг формы - ввод контактов
+#### Представление `CreatedOrderInformationView`
+
+Окно с информацией об успешно созданном заказе
 
 ```typescript
-class CreatedOrderInformationView extends BaseModalView {
+class CreatedOrderInformationView extends BaseView {
+    /**
+     * Объект заказа, информация о котором отображается сейчас в представлении
+     */
+    private _data:IOrder
+    
     /**
      * Устанавливает значения о созданном заказе
      */
     set data(data: IOrder) { }
 }
 ```
-
-Окно с информацией об успешно созданном заказе
 
 ## События
 

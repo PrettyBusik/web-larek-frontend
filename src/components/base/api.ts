@@ -51,6 +51,7 @@ export class RestApi extends Api {
         this.cdn = cdn;
     }
 
+    getProduct(id: number):Promise<IProduct> { }
     getProductsList(): Promise<IProduct[]> {
         return this
             .get('/product/')
