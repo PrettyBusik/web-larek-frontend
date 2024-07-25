@@ -1,27 +1,37 @@
-type TProductCategory = 'софт-скил' | 'кнопка' | 'другое' | 'дополнительное' | 'хард-скил'
 
-
-// General types
 export interface IProduct {
-    id: string
-    description: string
-    image: string
-    title: string
-    category: TProductCategory
-    price: number
+    id: string;
+    title: string;
+    category: Category;
+    image: string;
+    price: number;
+    description: string;
+}
+
+
+export interface ICart {
+    products: IProduct[];
+    totalAmountOfProducts: number;
+    totalSum: number;
 }
 
 export interface IOrder {
-    id: string
-    totalPrice: number
+    wayForPayment: TPaymentType;
+    addressForDelivery: string;
+    email: string;
+    phone: string;
+    id: number;
+    totalSum: number;
 }
 
-// Model's types
 
-export type TPaymentType = 'онлайн' | 'при получении'
+export type Category = "хард-скил" | "другое" | "кнопка" | "дополнительное" | "софт-скил";
+
+export type TPaymentType = "card" | "cash";
+
 
 export interface IDeliveryAndPayment {
-    paymentType: TPaymentType
+    payment: TPaymentType
     address: string
 }
 
@@ -31,7 +41,12 @@ export interface IContacts {
 }
 
 export interface IOrderCreationData extends IDeliveryAndPayment, IContacts {
-    products: IProduct[]
+    items: string[]
+    total: number
+}
+
+export interface ICreatedOrderData {
+    total: number
 }
 
 export type TValidationErrors<T> = Partial<Record<keyof T, string>>

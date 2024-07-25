@@ -1,4 +1,4 @@
-import {IOrder, IOrderCreationData, IProduct} from "../../types";
+import {ICreatedOrderData, IOrderCreationData, IProduct} from "../../types";
 
 export type ApiListResponse<Type> = {
     total: number,
@@ -7,7 +7,7 @@ export type ApiListResponse<Type> = {
 
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
-class Api {
+export class Api {
     readonly baseUrl: string;
     protected options: RequestInit;
 
@@ -46,12 +46,19 @@ class Api {
 export class RestApi extends Api {
     private readonly cdn: string;
 
-    constructor(cdn: string, baseUrl: string, options?: RequestInit) {
+    constructor(baseUrl: string, cdn: string, options?: RequestInit) {
         super(baseUrl, options);
         this.cdn = cdn;
     }
 
-    getProduct(id: number):Promise<IProduct> { }
+    getProduct(id: string): Promise<IProduct> {
+        return this
+            .get(`/product/${id}`)
+            .then((data: IProduct) => {
+                return {...data, image: this.cdn + data.image}
+            })
+    }
+
     getProductsList(): Promise<IProduct[]> {
         return this
             .get('/product/')
@@ -65,7 +72,7 @@ export class RestApi extends Api {
             })
     }
 
-    createOrder(data: IOrderCreationData): Promise<IOrder> {
-        return this.post('/order', data) as Promise<IOrder>
+    createOrder(data: IOrderCreationData): Promise<ICreatedOrderData> {
+        return this.post('/order', data) as Promise<ICreatedOrderData>
     }
 }

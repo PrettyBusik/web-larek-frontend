@@ -467,12 +467,12 @@ class CartItemView extends BaseView {
 }
 ```
 
-#### Представление `CartView`
+#### Представление `CartFullInformationView`
 
 Корзина
 
 ```typescript
-class CartView extends BaseView {
+class CartFullInformationView extends BaseView {
     /**
      * HTML нода с кнопкой "оформить"
      */

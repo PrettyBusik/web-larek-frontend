@@ -3,7 +3,7 @@ import {IEvents} from "./events";
 /**
  * Базовый компонент
  */
-export abstract class Component<T> {
+export abstract class BaseView {
     protected constructor(protected readonly container: HTMLElement) {
         // Учитывайте что код в конструкторе исполняется ДО всех объявлений в дочернем классе
     }
@@ -51,8 +51,7 @@ export abstract class Component<T> {
     }
 
     // Вернуть корневой DOM-элемент
-    render(data?: Partial<T>): HTMLElement {
-        Object.assign(this as object, data ?? {});
+    render(): HTMLElement {
         return this.container;
     }
 }
