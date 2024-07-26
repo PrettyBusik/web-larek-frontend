@@ -22,4 +22,8 @@ export class ProductPreviewView extends BaseCatalogProductView {
         super.product = product
         this.setText(this.descriptionNode, product.description)
     }
+
+     toggleAddToCartButton(enable:boolean){
+        this.addToCartButtonNode.disabled = !enable
+    }
 }

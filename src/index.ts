@@ -32,6 +32,7 @@ import {Step1View} from "./components/view/purchase/Step1View";
 import {PurchaseModel} from "./components/data/PurchaseModel";
 import {Step2View} from "./components/view/purchase/Step2View";
 import {SuccessMessageView} from "./components/view/purchase/SuccessMessageView";
+import {CatalogModel} from "./components/data/CatalogModel";
 
 // Common objects
 const api = new RestApi(API_URL, CDN_URL);
@@ -48,6 +49,7 @@ const purchaseSuccessMessageView = new SuccessMessageView(cloneTemplate('#succes
 // Models
 const cartModel = new CartModel();
 const purchaseModel = new PurchaseModel();
+const catalogModel = new CatalogModel()
 
 // Popup events handling
 
@@ -57,15 +59,15 @@ events.on(EVENT_POPUP_HIDE, () => popupView.hide())
 // Catalog events handling
 
 events.on(EVENT_PRODUCT_SHOW_PREVIEW, (data: TProductEvent) => {
-    api
-        .getProduct(data.id)
-        .then((product: IProduct) => {
-            const previewView = new ProductPreviewView(cloneTemplate("#card-preview"), events);
-            previewView.product = product;
-            popupView.content = previewView.render();
+    const product = catalogModel.getProductById(data.id)
 
-            events.emit(EVENT_POPUP_SHOW)
-        })
+    const previewView = new ProductPreviewView(cloneTemplate("#card-preview"), events);
+    previewView.product = product;
+    previewView.toggleAddToCartButton(product.price > 0)
+
+    popupView.content = previewView.render();
+
+    events.emit(EVENT_POPUP_SHOW)
 })
 
 // Cart events handling
@@ -90,12 +92,9 @@ events.on(EVENT_CART_SHOW, () => {
 })
 
 events.on(EVENT_CART_ADD_PRODUCT, (data: TProductEvent) => {
-    api
-        .getProduct(data.id)
-        .then((product) => {
-            cartModel.addProduct(product)
-            cartIconView.counterValue = cartModel.products.length
-        })
+    const product = catalogModel.getProductById(data.id)
+    cartModel.addProduct(product)
+    cartIconView.counterValue = cartModel.products.length
 })
 
 events.on(EVENT_CART_REMOVE_PRODUCT, (data: TProductEvent) => {
@@ -162,14 +161,17 @@ events.on(EVENT_PURCHASE_STEP2_SUBMIT, () => {
 api
     .getProductsList()
     .then((products: IProduct[]) => {
+        catalogModel.products = products
+
         const productNodes: HTMLElement[] = [];
 
-        products.map((product) => {
-            const productView = new CatalogItemView(cloneTemplate("#card-catalog"), events);
-            productView.product = product
-            productNodes.push(productView.render())
+        catalogModel
+            .products
+            .map((product: IProduct) => {
+                const productView = new CatalogItemView(cloneTemplate("#card-catalog"), events);
+                productView.product = product
+                productNodes.push(productView.render())
+            })
 
-
-        })
         catalogView.items = productNodes;
     })
