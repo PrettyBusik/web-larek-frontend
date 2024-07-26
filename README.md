@@ -56,10 +56,6 @@ yarn build
 
 ## Типы данных
 
-### Основные типы данных
-
-Эти типы данных используются повсеместно в проекте и являются общими.
-
 ```typescript
 type TProductCategory = 'софт-скил' | 'кнопка' | 'другое' | 'дополнительное' | 'хард-скил'
 ```
@@ -78,17 +74,23 @@ interface IProduct {
 ```
 
 Представляет информацию о товаре
+```typescript
+interface ICart {
+    products: IProduct[];
+    totalAmountOfProducts: number;
+    totalSum: number;
+}
+```
+
+Представляет информацию о корзине и ее текущем состоянии
 
 ```typescript
-interface IOrder {
-    id: string
-    totalPrice: number
+interface ICreatedOrderData {
+    total: number
 }
 ```
 
 Представляет информацию о созданном заказе, которую возвращает сервер
-
-### Вспомогательные типы данных
 
 ```typescript
 type TPaymentType = 'онлайн' | 'при получении'
@@ -116,7 +118,8 @@ interface IContacts {
 
 ```typescript
 interface IOrderCreationData extends IDeliveryAndPayment, IContacts {
-    products: IProduct[]
+    items: string[]
+    total: number
 }
 ```
 
@@ -164,7 +167,7 @@ class RestApi extends Api {
     /**
      * Отправляет на сервер инфомрацию для создания заказа. В ответ возвращает объект созданного заказа
      */
-    createOrder(data: IOrderCreationData): Promise<IOrder> { }
+    createOrder(data: IOrderCreationData): Promise<ICreatedOrderData> { }
 }
 ```
 
@@ -175,8 +178,6 @@ class RestApi extends Api {
 Модель содержит в себе текущее состояние каталога товаров.
 
 ```typescript
-import {IProduct} from "./index";
-
 class CatalogModel {
     /**
      * Список товаров, которые сейчас необходимо отобразить в каталоге
@@ -196,7 +197,7 @@ class CatalogModel {
     /**
      * Метод для получения из модели одного товара по его id
      */
-    getProduct(id: number): IProduct{ }
+    getProductById(id: number): IProduct | null { }
 }
 ```
 
@@ -217,6 +218,11 @@ class CartModel {
     get totalPrice(): number { }
 
     /**
+     * Возвращает список ID товаров в корзине
+     */
+    get productIds(): string[] { }
+    
+    /**
      * Возвращает список товаров в корзине
      */
     get products(): IProduct[] { }
@@ -227,14 +233,14 @@ class CartModel {
     addProduct(product: IProduct): void { }
 
     /**
-     * Удаляет указанный товар из корзины
+     * Удаляет указанный товар из корзины по его ID
      */
-    removeProduct(product: IProduct): void { }
+    removeProduct(productId: string): void { }
 
     /**
-     * Возвращает список id товаров, которые находятся в корзине
+     * Удаляет из корзины все товары. Используется чтобы очистить корзину после оформления заказа
      */
-    getProductIds(): number[] { }
+    clear(): void { }
 }
 ```
 
@@ -244,41 +250,59 @@ class CartModel {
 Модель для работы формы оформления заказа
 
 ```typescript
-class OrderFormModel {
+class PurchaseModel implements IDeliveryAndPayment, IContacts {
     /**
-     * Текущая информация о достаке и оплате из формы
+     * Выбранный тип оплаты
      */
-    private deliveryAndPaymentData: IDeliveryAndPayment
+    payment: TPaymentType = 'card'
     
     /**
-     * Текущая информация о контактах из формы
+     * Указанный адрес доставки
      */
-    private contactsData: IContacts
+    address = ''
     
     /**
-     * Устанавливает в модель информацию о способе доставки и оплате
+     * Указанный email
      */
-    set deliveryAndPayment(data: IDeliveryAndPayment) { }
+    email = ''
+    
+    /**
+     * Указанный номер телефона
+     */
+    phone = ''
 
     /**
-     * Валидирует информацию о способе доставки и оплате
+     * Возвращает значения для полей доставки и способа оплаты. Используется для заполнения первого шага формы
      */
-    validateDeliveryAndPayment(data: IDeliveryAndPayment): TValidationErrors<IDeliveryAndPayment> | null { }
+    get deliveryAndPayment(): IDeliveryAndPayment { }
 
     /**
-     * Устанавливает в модель информацию о контатах
+     * Возвращает значения для полей контактов. Используется для заполнения второго шага формы
      */
-    set contacts(data: IContacts) { }
+    get contacts(): IContacts {}
 
     /**
-     * Валидирует информацию о контатах
+     * Метод вызывается при вводе значения в поле ввода формы. Обновляет соответствующее поле модели
      */
-    validateContacts(data: IContacts): TValidationErrors<IContacts> | null { }
+    updateData(data: Partial<IDeliveryAndPayment> | Partial<IContacts>): void {}
 
     /**
-     * На основании информации в модели генерирует и возвращает объект, содержащий в себе всю информацию о заказа для его создания
+     * Валидирует текущие значения способа оплат и адреса доставки
+     * Возвращает список ошибок
      */
-    get orderCreationData(): IOrderCreationData { }
+    validateDeliveryAndPayment(): TValidationErrors<IDeliveryAndPayment> | null {}
+
+    /**
+     * Валидирует текущие значения контактов
+     * Возвращает список ошибок
+     */
+    validateContacts(): TValidationErrors<IContacts> | null {}
+
+    /**
+     * Очищает модель.
+     * Удаляет значения из всех полей чтобы можно было начать заполненение заного
+     */
+    clear(): void { }
 }
 ```
 
@@ -297,16 +321,11 @@ abstract class BaseView {
      * HTML нода, которая является внешней для верстки данного представляения
      */
     protected container: HTMLElement
-
-    /**
-     * Менеджер событий для взаимодействия с остальной частью приложения
-     */
-    protected eventsManager: EventEmitter
     
     /**
-     * Констурктор принимает html верстку для представления и объект менеджера событий
+     * Констурктор принимает html верстку для представления
      */
-    constructor(container: HTMLElement, eventsManager: EventEmitter) { }
+    constructor(container: HTMLElementr) { }
 
     /**
      * Возвращает корневой html элемент представяления для рендера его на странице/в другом представлении
@@ -315,25 +334,25 @@ abstract class BaseView {
 }
 ```
 
-#### Представление `ModalView`
+#### Представление `PopupView`
 
 Представление для работы модельного окна. Позволяет размещать внутри любую информацию и управлять видимостью попапа независимо от содержимого
 
 ```typescript
-class ModalView extends BaseView {
+class PopupView extends BaseView {
     /**
      * Кнопка закрытия модельного окна
      */
-    private closeButton: HTMLButtonElement;
+    private closeButtonNode: HTMLButtonElement;
     /**
      * Содержимое модального окна
      */
-    private content: BaseView
+    private contentNode: BaseView
 
     /**
-     * Устанавливает представление, которое должно быть отрендерино внутри этого модельного окна.
+     * Устанавливает значение, которое должно быть отрендерино внутри этого модельного окна.
      */
-    set content(view: BaseView) { }
+    set content(content: HTMLElement) { }
     
     /**
      * Показыает окно (делает его видимым)
@@ -346,63 +365,40 @@ class ModalView extends BaseView {
     hide(): void { }
 }
 ```
+#### Представление `BaseProductView`
+
+Базовое представление товара. Содержит в себе общие поля и методы
+
+```typescript
+abstract class BaseProductView extends BaseView {
+    /**
+     * Название товара
+     */
+    protected readonly titleNode: HTMLElement;
+    /**
+     * цена
+     */
+    protected readonly priceNode: HTMLElement;
+    /**
+     * ID товара
+     */
+    protected productId: string;
+
+    /**
+     * Констурктор принимает html верстку для представления и евент-менеджер
+     */
+    constructor(container: HTMLElement, protected events: IEvents) { }
+    
+    /**
+     * Сеттер для установки товара, который должен отобрадаться
+     */
+    set product(product: IProduct) { }
+}
+```
 
 
 ### Представления каталога
 
-#### Представление `CatalogItemView`
-
-Плитка одного товара в каталоге. Представляет информацию об одном товаре
-
-```typescript
-class CatalogItemView extends BaseView{
-    /**
-     * HTML нода с заголовков товара
-     */
-    private title: HTMLElement
-    
-    /**
-     * HTML нода с описания товара
-     */
-    private description: HTMLElement
-
-    /**
-     * HTML нода с цены товара
-     */
-    private price: HTMLElement
-
-    /**
-     * HTML нода с картинкой товара
-     */
-    private image: HTMLImageElement
-
-    /**
-     * HTML нода с кнопкой "купить"
-     */
-    private byeButton: HTMLButtonElement
-    
-    /**
-     * Товар, который сейчас отображает представление
-     */
-    private _product: IProduct
-
-    /**
-     * Признак того, должно ли представлени отобажать полную информацию о товаре (с описанием и кропкой "купить") или же сокращенное (для списка товаров)
-     */
-    private isFull:boolean
-    
-    /**
-     * Устанавливает товар, который это представление должно отображать и который должно пробрасывать в события
-     */
-    set product(product: IProduct) { }
-
-
-    /**
-     * Сеттре для поля isFull
-     */
-    set showFullInfo(full: boolean) { }
-}
-```
 
 #### Представление `CatalogView`
 
@@ -410,15 +406,86 @@ class CatalogItemView extends BaseView{
 
 ```typescript
 class CatalogView extends BaseView{
+
     /**
-     * Список представлений-товаров, которые должны отображаться внутри этого каталога
+     * Устанавливает элементы, которые должны отображатся внутри представления
      */
-    private content: CatalogItemView[]
+    set items(items: HTMLElement[]) { }
+}
+```
+
+#### Представление `BaseCatalogProductView`
+
+Базовый класс для представлений товара в каталоге. Расширяет базовое представление товара и добавляет доп. поля и функционал
+
+```typescript
+class CatalogItemView extends BaseView{
+    /**
+     * Категория товара
+     */
+    protected readonly categoryNode: HTMLElement;
+    /**
+     * Избражение товара
+     */
+    protected readonly imageNode: HTMLImageElement;
+
+    /**
+     * Констурктор вызывает базовый конструктор и инициализирует поля своего класса
+     */
+    constructor(container: HTMLElement, events: IEvents) {}
+
+    /**
+     * Сеттер для установки товара, который должен отобрадаться.
+     * Вызывает родительской метод и так же устанавливает значения для полей своего класса
+     */
+    set product(product: IProduct) {}
+}
+```
+
+#### Представление `CatalogItemView`
+
+Карточка товара в каталоге с краткой информацией о товаре.
+
+```typescript
+class CatalogItemView extends BaseCatalogProductView {
+    /**
+     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий
+     */
+    constructor(container: HTMLElement, events: IEvents) {}
+}
+```
+
+#### Представление `ProductPreviewView`
+
+Карточка с полной информацией о товаре (показывается в попапе). В отличие от карточки в каталоге, эта содержит доп поля и бросает другие события
+
+```typescript
+class ProductPreviewView extends BaseCatalogProductView {
+    /**
+     * Описание товара
+     */
+    private readonly descriptionNode: HTMLElement
+   
+    /**
+     * Кнопка добавления в корзину
+     */
+    private readonly addToCartButtonNode: HTMLButtonElement
+   
+    /**
+     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
+     * Так же инициализирует поля своего класса
+     */
+    constructor(container: HTMLElement, events: IEvents) {}
     
     /**
-     * Устанавливает список предствлений-товаров, которые должны быть в этом каталоге
+     * Устанавливает товар для отображения
      */
-    set items(items:CatalogItemView) { }
+    set product(product: IProduct) {}
+    
+    /**
+     * Включает/выключает кнопку добавления в корзину
+     */
+    toggleAddToCartButton(enable:boolean){}
 }
 ```
 
@@ -426,80 +493,79 @@ class CatalogView extends BaseView{
 
 #### Представление `CartItemView`
 
-Строчка в корзине. Представляет информацию об одной конкретной позиции в корзине
+Строчка в корзине. Представляет информацию об одной конкретной позиции в корзине. Расширяет базовое представление товара
 
 ```typescript
-class CartItemView extends BaseView {
+class CartItemView extends BaseProductView {
     /**
-     * HTML нода с заголовков товара
+     * Порядковый номер записи в списке
      */
-    private titleNode: HTMLElement
+    private readonly indexNode: HTMLElement
     /**
-     * HTML нода с порядковым номером товара в списке
+     * Кнопка удаления из корзины
      */
-    private positionNode: HTMLElement
-    /**
-     * HTML нода с ценой товара
-     */
-    private priceNode: HTMLElement
-    /**
-     * HTML нода с кнопкой удаленния товара из корзины
-     */
-    private removeButtonNode: HTMLElement
-    /**
-     * Товар, который отображает данное представление
-     */
-    private _product: IProduct
-    /**
-     * Позиция в списке, которую отображает данное представление
-     */
-    private _position: number
-    
-    /**
-     * Устанавливает товар, который это представление должно отображать и который должно пробрасывать в события
-     */
-    set product(product: IProduct) { }
+    private readonly removeButtonNode: HTMLButtonElement;
 
     /**
-     * Устанавливает порядковый номер элемента в списке для отображения его в левой колонке
+     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
+     * Так же инициализирует поля своего класса
      */
-    set position(position: number) { }
+    constructor(container: HTMLElement, events: IEvents) {}
+
+    /**
+     * Устанавливает порядковый номер записи в списке
+     */
+    set index(index:number){
+        this.setText(this.indexNode,String(index))
+    }
 }
 ```
 
-#### Представление `CartFullInformationView`
+#### Представление `CartView`
 
-Корзина
+Представление с содержимым корзины. Показывается в попапе.
 
 ```typescript
-class CartFullInformationView extends BaseView {
+class CartView extends BaseView {
     /**
-     * HTML нода с кнопкой "оформить"
+     * Список товаров в корзине
      */
-    private submitButtonNode:HTMLElement
-    /**
-     * Список представлений-товаров, которые должны отображаться внутри этой корзины
-     */
-    private content: CartItemView[]
-
-    /**
-     * Итоговая цена, которая должна отображаться
-     */
-    private price: number
+    private readonly itemsListNode: HTMLElement;
     
     /**
-     * Устанавливает список предствлений-товаров, которые должны быть в этой корзине
+     * Итоговая цена
      */
-    set items(items: CartItemView[]) { }
+    private readonly totalPriceNode: HTMLElement;
+    
+    /**
+     * кнопка перехода к оформлению заказа
+     */
+    private readonly submitButton: HTMLButtonElement;
 
     /**
-     * Устанавливает итоговую цену для всех товаров в корзине
+     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
+     * Так же инициализирует поля своего класса
+     */
+    constructor(container: HTMLElement, events: IEvents) { }
+
+    /**
+     * Устанавливает элементы для отображения
+     */
+    set items(items: HTMLElement[]) { }
+
+    /**
+     * Устанавливает итоговую цену
      */
     set totalPrice(totalPrice: number) { }
+
+    /**
+     * Включает/выключает кнопку
+     */
+    toggleSubmitButton(enable: boolean): void { }
 }
 ```
 
-#### Представление `CartIconView`
+#### Представление `CartView`
 
 Иконка корзины в шапке сайта, которая отображает количество товаров в корзине
 
@@ -509,132 +575,176 @@ class CartIconView extends BaseView {
      * HTML нода с иконкой, на которой отображается число товаров
      */
     private counterNode: HTMLElement
-    
+
     /**
-     * количество товаров
+     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
+     * Так же инициализирует поля своего класса
      */
-    private _productsNumber: number
+    constructor(container: HTMLElement, events: IEvents) { }
     
     /**
      * Устанавливает количество товаров в корзине
      */
-    set productsNumber(productsNumber: number) { }
+    set counterValue(counter: number) { }
 }
 ```
 
 ### Представления оформления заказа
 
-#### Представление `BaseFormView`
+#### Представление `BaseStepView`
 
-Базовое представление формы заказа. Общее для всех шагов оформления заказа
+Базовое представление для шага формы. В качестве дженерик-типа принимает тип данных, с которыми работает форма
 
 ```typescript
-class BaseFormView extends BaseView {
+abstract class BaseStepView<DataType> extends BaseView {
     /**
-     * HTML нода с кнопкой "далее"
+     * Элемент с ошибками валидации
      */
-    private continuieButtonNode:HTMLElement
-    
+    protected readonly validationErrorsNode: HTMLElement;
     /**
-     * Делает кнопку "далее" активной
+     * Кнопка перехода к следующему шаге
      */
-    enableContinuieButton() { }
-    
+    protected readonly submitButton: HTMLButtonElement;
+
     /**
-     * Делает кнопку "далее" неактивной
+     * Абстрактный метод для установки значений в поля ввода
      */
-    disableContinuieButton() { }
+    abstract set values(data: DataType);
+
+    /**
+     * Абстрактный метод для установки ошибок валидации
+     */
+    abstract set validationErrors(data: TValidationErrors<DataType>);
+
+    /**
+     * Констурктор вызывает базовый конструктор инициализирует поля своего класса
+     */
+    constructor(container: HTMLElement) { }
+
+    /**
+     * Включает/выключает кнопку перехода к следюущему шагу
+     */
+    toggleSubmitButton(enable: boolean): void {}
 }
 ```
 
-#### Представление `DeliveryAndPaymentFormView`
+#### Представление `Step1View`
 
 Первый шаг формы - ввод адреса и способа оплаты
 
 ```typescript
-class DeliveryAndPaymentFormView extends BaseFormView {
+
+ class Step1View extends BaseStepView<IDeliveryAndPayment> {
     /**
-     * Текущие значения полей формы
+     * Кнопка выбора оплаты картой
      */
-    private _data:IDeliveryAndPayment
-    /**
-     * Текущие ошибки валиадации
-     */
-    private _errors:TValidationErrors<IDeliveryAndPayment> | null
+    private readonly cardPaymentMethodNodes: HTMLButtonElement;
     
     /**
-     * Устанавливает значения полей формы
+     * Кнопка выбора оплаты наличкой
      */
-    set data(data: IDeliveryAndPayment) { }
+    private readonly cashPaymentMethodNodes: HTMLButtonElement;
+    
+    /**
+     * Поле ввода адреса
+     */
+    private readonly addressNode: HTMLInputElement;
 
     /**
-     * Устанавливает ошбики валидации
+     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
+     * Так же инициализирует поля своего класса
      */
-    set validationErrors(errors: TValidationErrors<IDeliveryAndPayment> | null) { }
+    constructor(container: HTMLElement, events: IEvents) {}
+
+    /**
+     * Устанавливает значения для полей ввода
+     */
+    set values(data: IDeliveryAndPayment) { }
+
+    /**
+     * Устанавливает ошибки валидации
+     */
+    set validationErrors(errors: TValidationErrors<IDeliveryAndPayment> | null) {}
 }
 ```
 
-#### Представление `ContactsFormView`
+#### Представление `Step2View`
 
 Второй шаг формы - ввод контактов
 
 ```typescript
-class ContactsFormView extends BaseFormView {
+
+class Step2View extends BaseStepView<IDeliveryAndPayment> {
     /**
-     * Текущие значения полей формы
+     * Поле ввода почты
      */
-    private _data:IContacts
-    /**
-     * Текущие ошибки валиадации
-     */
-    private _errors:TValidationErrors<IContacts> | null
-    
-    /**
-     * Устанавливает значения полей формы
-     */
-    set data(data: IContacts) { }
+    private readonly emailNode: HTMLButtonElement;
 
     /**
-     * Устанавливает ошбики валидации
+     * Поле ввода телефона
      */
-    set validationErrors(errors: TValidationErrors<IContacts> | null) { }
+    private readonly phoneNode: HTMLButtonElement;
+
+    /**
+     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
+     * Так же инициализирует поля своего класса
+     */
+    constructor(container: HTMLElement, events: IEvents) {}
+
+    /**
+     * Устанавливает значения для полей ввода
+     */
+    set values(data: IDeliveryAndPayment) { }
+
+    /**
+     * Устанавливает ошибки валидации
+     */
+    set validationErrors(errors: TValidationErrors<IDeliveryAndPayment> | null) {}
 }
 ```
 
-#### Представление `CreatedOrderInformationView`
+#### Представление `SuccessMessageView`
 
 Окно с информацией об успешно созданном заказе
 
 ```typescript
-class CreatedOrderInformationView extends BaseView {
+class SuccessMessageView extends BaseView {
     /**
-     * Объект заказа, информация о котором отображается сейчас в представлении
+     * элемент с итоговой ценой
      */
-    private _data:IOrder
+    private readonly priceNode: HTMLElement;
+    /**
+     * кнопка завершения
+     */
+    private readonly submitButtonNode: HTMLButtonElement;
+
+    /**
+     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
+     * Так же инициализирует поля своего класса
+     */
+    constructor(container: HTMLElement, events: IEvents) {}
     
     /**
-     * Устанавливает значения о созданном заказе
+     * Устанавливает значения в представление
      */
-    set data(data: IOrder) { }
+    set createdOrderData(data: ICreatedOrderData) {}
 }
 ```
 
 ## События
 
-- `product-info:show` - Тригерится при клике на товар в каталоге. Открывает попап с информацией о товаре. Содержит в себе объект `IProduct`, на который был произведен клик и который надо показать.
-- `product-info:hide` - Тригерится при клике на крестик в попапе просмотра информации о товаре. Закрывает попап.
--
-- `cart:show` - тригерится при клике на кнопку иконку корзины в шапке сайта. Открывает попап с корзиной.
-- `cart:hide` - Тригерится при клике на крестик в попапе корзины. Закрывает попап.
-- `cart:add-product` - Тригерится при клике на кнопку "купать" в карточке товара. Добавляет этот товар в корзину. Содержит в себе объект `IProduct`, на который был произведен клик и который надо добавить.
-- `cart:remove-product` - Тригерится при клике на иконку "удалить" в корзине. Содержит в себе объект `IProduct`, на который был произведен клик и который надо удалить.
--
-- `order-manager:start` - Тригерится при клике на кнопку "оформить" в корзине. Запускает процесс оформления заказа. Содержит в себе объект `ICart` с информацией о товарах в корзине. Показывает попап с формой.
-- `order-manager:step-1.hide` - Тригерится при клике на крестик в попапе формы. Закрывает попап. Прерывает оформление заказа
-- `order-manager:step-1.changed` - Тригерится при изменении значений в полях формы. Содержит в себе объект `IDeliveryAndPayment` с информацией о значениях в форме. Запускает валидацию формы.
-- `order-manager:step-1.submit` - Тригерится при нажатии на кнопку "далее" в окне формы. Закрывает попап и открывает попап со вторым шагом
-- `order-manager:step-2.hide` - Тригерится при клике на крестик в попапе формы. Закрывает попап. Прерывает оформление заказа
-- `order-manager:step-2.changed` - Тригерится при изменении значений в полях формы. Содержит в себе объект `IContacts` с информацией о значениях в форме. Запускает валидацию формы.
-- `order-manager:step-2.submit` - Тригерится при нажатии на кнопку "далее" в окне формы. Закрывает попап. Отправляет запрос на сервер для создания заказа.
-- `order-manager:order-info.show` - Тригерится после того как на сервере был создан заказ. Показывает попап с сообщением о создании заказа. Содержит в себе объект `IOrder` с информацией о созданном заказе.
-- `order-manager:order-info.hide` - Тригерится при клике на крестик в попапе информации  созданном заказе. Закрывает попап.
+- `popup.show` - Показать попап
+- `popup.hide` - Скрыть попап
+
+- `product.showPreview` - Показать полную информацию о товаре
+
+- `cart.show` - Показать корзину
+- `cart.addProduct` - Добавить товар в корзину
+- `cart.removeProduct` - Удалить товар из корзины
+- 
+- `purchase.step1.show` - Показать первый шаг оформления заказа
+- `purchase.step1.handleChanges` - Значение в форме первого шага были изменены. Надо их обработать
+- `purchase.step1.submit` - Завершить первый шаг оформления заказа. Перейти ко второму
+
+- `purchase.step2.handleChanges` - Значение в форме второго шага были изменены. Надо их обработать
+- `purchase.step2.submit` - Завершить второй шаг оформления заказа. Создать заказ

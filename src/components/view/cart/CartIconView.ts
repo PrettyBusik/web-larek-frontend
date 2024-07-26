@@ -1,11 +1,10 @@
 import {BaseView} from "../../base/BaseView";
-import {ICart} from "../../../types";
-import {EVENT_CART_SHOW, EventEmitter} from "../../base/events";
+import {EVENT_CART_SHOW, IEvents,} from "../../base/events";
 
 export class CartIconView extends BaseView {
    protected counterNode: HTMLElement;
 
-    constructor(container: HTMLElement, events: EventEmitter) {
+    constructor(container: HTMLElement, events: IEvents) {
         super(container);
         this.counterNode = container.querySelector(".header__basket-counter");
 

@@ -1,13 +1,13 @@
+export type TProductCategory = "хард-скил" | "другое" | "кнопка" | "дополнительное" | "софт-скил";
 
 export interface IProduct {
     id: string;
     title: string;
-    category: Category;
+    category: TProductCategory;
     image: string;
     price: number;
     description: string;
 }
-
 
 export interface ICart {
     products: IProduct[];
@@ -15,20 +15,7 @@ export interface ICart {
     totalSum: number;
 }
 
-export interface IOrder {
-    wayForPayment: TPaymentType;
-    addressForDelivery: string;
-    email: string;
-    phone: string;
-    id: number;
-    totalSum: number;
-}
-
-
-export type Category = "хард-скил" | "другое" | "кнопка" | "дополнительное" | "софт-скил";
-
 export type TPaymentType = "card" | "cash";
-
 
 export interface IDeliveryAndPayment {
     payment: TPaymentType

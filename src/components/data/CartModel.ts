@@ -1,10 +1,10 @@
 import {IProduct} from "../../types";
 
 export class CartModel {
-    private _products: IProduct[] = [];
+    private productsList: IProduct[] = [];
 
-    get products() {
-        return this._products;
+    get products(): IProduct[] {
+        return this.productsList;
     }
 
     get totalPrice(): number {
@@ -27,12 +27,12 @@ export class CartModel {
     }
 
     removeProduct(productId: string) {
-        this._products = this._products.filter((element) => {
+        this.productsList = this.productsList.filter((element) => {
             return element.id !== productId
         })
     }
 
     clear(): void {
-        this._products = []
+        this.productsList = []
     }
 }

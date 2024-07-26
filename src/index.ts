@@ -23,7 +23,6 @@ import {CatalogView} from "./components/view/catalog/CatalogView";
 import {PopupView} from "./components/view/PopupView";
 import {CartModel} from "./components/data/CartModel";
 import {CartIconView} from "./components/view/cart/CartIconView";
-import {RestApi} from "./components/base/api";
 import {IProduct} from "./types";
 import {ProductPreviewView} from "./components/view/catalog/ProductPreviewView";
 import {CartView} from "./components/view/cart/CartView";
@@ -33,6 +32,7 @@ import {PurchaseModel} from "./components/data/PurchaseModel";
 import {Step2View} from "./components/view/purchase/Step2View";
 import {SuccessMessageView} from "./components/view/purchase/SuccessMessageView";
 import {CatalogModel} from "./components/data/CatalogModel";
+import {RestApi} from "./components/common/RestApi";
 
 // Common objects
 const api = new RestApi(API_URL, CDN_URL);
@@ -40,7 +40,7 @@ const events = new EventEmitter();
 
 // Permanent views
 const popupView = new PopupView(document.querySelector("#modal-container"), events);
-const catalogView = new CatalogView(document.querySelector(".gallery"), events);
+const catalogView = new CatalogView(document.querySelector(".gallery"));
 const cartIconView = new CartIconView(document.querySelector(".header__basket"), events);
 const purchaseStep1View = new Step1View(cloneTemplate('#order'), events)
 const purchaseStep2View = new Step2View(cloneTemplate('#contacts'), events)

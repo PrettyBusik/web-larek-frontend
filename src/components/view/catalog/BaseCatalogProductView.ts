@@ -1,6 +1,6 @@
 import {IEvents} from "../../base/events";
 import {BaseProductView} from "../BaseProductView";
-import {Category, IProduct} from "../../../types";
+import {TProductCategory, IProduct} from "../../../types";
 
 export abstract class BaseCatalogProductView extends BaseProductView {
     protected readonly categoryNode: HTMLElement;
@@ -20,7 +20,7 @@ export abstract class BaseCatalogProductView extends BaseProductView {
         this.categoryNode.classList.add(this.getStylesForCategory(product.category));
     }
 
-    private getStylesForCategory(category: Category): string {
+    private getStylesForCategory(category: TProductCategory): string {
         switch (category) {
             case "софт-скил":
                 return "card__category_soft";

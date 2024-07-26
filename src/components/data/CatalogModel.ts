@@ -1,19 +1,19 @@
 import {IProduct} from "../../types";
 
 export class CatalogModel {
-    private _products: IProduct[] = [];
+    private productsList: IProduct[] = [];
 
-    get products():IProduct[] {
-        return this._products;
+    get products(): IProduct[] {
+        return this.productsList;
     }
 
     set products(products: IProduct[]) {
-        this._products = products
+        this.productsList = products
     }
 
     getProductById(id: string): IProduct | null {
         return this
-            ._products
+            .productsList
             .find((item: IProduct) => item.id === id) ?? null
     }
 }
