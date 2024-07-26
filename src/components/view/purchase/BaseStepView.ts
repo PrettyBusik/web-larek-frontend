@@ -15,10 +15,7 @@ export abstract class BaseStepView<DataType> extends BaseView {
         this.submitButton = container.querySelector('button[type="submit"]')
     }
 
-
     toggleSubmitButton(enable: boolean): void {
-        console.log(enable)
-        console.log(this.submitButton)
         this.submitButton.disabled = !enable
     }
 }

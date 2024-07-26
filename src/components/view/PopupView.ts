@@ -2,28 +2,37 @@ import {BaseView} from "../base/BaseView";
 import {EVENT_POPUP_HIDE, IEvents} from "../base/events";
 
 export class PopupView extends BaseView {
-    private closeButtonNode: HTMLElement;
-    private _content: HTMLElement;
+    private readonly closeButtonNode: HTMLElement;
+    private readonly contentNode: HTMLElement;
+
+    private readonly activeCssClass = 'modal_active'
 
     constructor(container: HTMLElement, events: IEvents) {
         super(container);
         this.closeButtonNode = container.querySelector(".modal__close");
-        this._content = container.querySelector(".modal__content");
+        this.contentNode = container.querySelector(".modal__content");
 
         this.closeButtonNode.addEventListener("click", () => {
             events.emit(EVENT_POPUP_HIDE)
         })
+        container.addEventListener("click", (event) => {
+            if (event.target === event.currentTarget) {
+                events.emit(EVENT_POPUP_HIDE)
+            }
+        })
     }
 
-    show(){
-      this.container.style.display="block";
+    show() {
+        this.container.classList.add(this.activeCssClass)
+        document.body.style.overflowY = 'hidden'
     }
 
-    hide(){
-      this.setHidden(this.container);
+    hide() {
+        this.container.classList.remove(this.activeCssClass)
+        document.body.style.overflowY = 'auto'
     }
 
-    set content(content:HTMLElement){
-       this._content.replaceChildren(content);
+    set content(content: HTMLElement) {
+        this.contentNode.replaceChildren(content);
     }
 }

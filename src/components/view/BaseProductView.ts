@@ -16,7 +16,9 @@ export abstract class BaseProductView extends BaseView {
 
     set product(product: IProduct) {
         this.setText(this.titleNode, product.title);
-        this.setText(this.priceNode, product.price + " синапсов");
+        this.setText(this.priceNode,
+            product.price ? `${product.price} синапсов` : 'бесценно'
+        );
         this.productId = product.id;
     }
 }

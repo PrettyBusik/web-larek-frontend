@@ -20,7 +20,12 @@ export class CartView extends BaseView {
     set items(items: HTMLElement[]) {
         this.itemsListNode.replaceChildren(...items)
     }
+
     set totalPrice(totalPrice: number) {
         this.setText(this.totalPriceNode,totalPrice + " синапсов")
+    }
+
+    toggleSubmitButton(enable: boolean): void {
+        this.submitButton.disabled = !enable
     }
 }

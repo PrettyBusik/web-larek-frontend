@@ -83,6 +83,7 @@ events.on(EVENT_CART_SHOW, () => {
     const cartView = new CartView(cloneTemplate('#basket'), events)
     cartView.items = itemNodes;
     cartView.totalPrice = cartModel.totalPrice;
+    cartView.toggleSubmitButton(itemNodes.length !== 0);
     popupView.content = cartView.render()
 
     events.emit(EVENT_POPUP_SHOW)
@@ -99,6 +100,7 @@ events.on(EVENT_CART_ADD_PRODUCT, (data: TProductEvent) => {
 
 events.on(EVENT_CART_REMOVE_PRODUCT, (data: TProductEvent) => {
     cartModel.removeProduct(data.id)
+    cartIconView.counterValue = cartModel.products.length
 
     events.emit(EVENT_CART_SHOW)
 })
