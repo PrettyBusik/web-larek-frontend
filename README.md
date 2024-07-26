@@ -149,10 +149,7 @@ class RestApi extends Api {
      * Вызывает базовый конструктор чтобы настроить url сервера для отправки запросов.
      * Так же дополнительно принимает базовый url медиа файлов
      */
-    constructor(cdn: string, baseUrl: string, options?: RequestInit) {
-        super(baseUrl, options);
-        this.cdn = cdn;
-    }
+    constructor(cdn: string, baseUrl: string, options?: RequestInit) { }
     
     /**
      * Получает с сервера информацию о товаре по его id
@@ -736,15 +733,19 @@ class SuccessMessageView extends BaseView {
 - `popup.show` - Показать попап
 - `popup.hide` - Скрыть попап
 
+
 - `product.showPreview` - Показать полную информацию о товаре
+
 
 - `cart.show` - Показать корзину
 - `cart.addProduct` - Добавить товар в корзину
 - `cart.removeProduct` - Удалить товар из корзины
-- 
+
+
 - `purchase.step1.show` - Показать первый шаг оформления заказа
 - `purchase.step1.handleChanges` - Значение в форме первого шага были изменены. Надо их обработать
 - `purchase.step1.submit` - Завершить первый шаг оформления заказа. Перейти ко второму
+
 
 - `purchase.step2.handleChanges` - Значение в форме второго шага были изменены. Надо их обработать
 - `purchase.step2.submit` - Завершить второй шаг оформления заказа. Создать заказ
