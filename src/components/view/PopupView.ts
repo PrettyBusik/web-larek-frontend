@@ -23,12 +23,12 @@ export class PopupView extends BaseView {
     }
 
     show() {
-        this.container.classList.add(this.activeCssClass)
+        this.toggleClass(this.container,this.activeCssClass,true)
         document.body.style.overflowY = 'hidden'
     }
 
     hide() {
-        this.container.classList.remove(this.activeCssClass)
+        this.toggleClass(this.container,this.activeCssClass,false)
         document.body.style.overflowY = 'auto'
     }
 

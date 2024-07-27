@@ -10,7 +10,9 @@ export abstract class BaseView {
 
     // Переключить класс
     toggleClass(element: HTMLElement, className: string, force?: boolean) {
-        element.classList.toggle(className, force);
+        if (element) {
+            element.classList.toggle(className, force);
+        }
     }
 
     // Установить текстовое содержимое

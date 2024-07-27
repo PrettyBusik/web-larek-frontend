@@ -32,11 +32,11 @@ export class Step1View extends BaseStepView<IDeliveryAndPayment> {
 
     set values(data: IDeliveryAndPayment) {
         if (data.payment === 'card') {
-            this.cardPaymentMethodNodes.classList.add(this.activeButtonCssClass)
-            this.cashPaymentMethodNodes.classList.remove(this.activeButtonCssClass)
+            this.toggleClass(this.cardPaymentMethodNodes,this.activeButtonCssClass,true)
+            this.toggleClass(this.cashPaymentMethodNodes,this.activeButtonCssClass,false)
         } else {
-            this.cardPaymentMethodNodes.classList.remove(this.activeButtonCssClass)
-            this.cashPaymentMethodNodes.classList.add(this.activeButtonCssClass)
+            this.toggleClass(this.cardPaymentMethodNodes,this.activeButtonCssClass,false)
+            this.toggleClass(this.cashPaymentMethodNodes,this.activeButtonCssClass,true)
         }
 
         this.addressNode.value = data.address

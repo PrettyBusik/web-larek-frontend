@@ -364,40 +364,73 @@ class PopupView extends BaseView {
     hide(): void { }
 }
 ```
-#### Представление `BaseProductView`
 
-Базовое представление товара. Содержит в себе общие поля и методы
+#### Представление `ProductView`
+
+Представление товара. Используется в каталоге, для показа полной информации о товаре и в корзине.
 
 ```typescript
-abstract class BaseProductView extends BaseView {
+ class ProductView extends BaseView {
     /**
      * Название товара
      */
-    protected readonly titleNode: HTMLElement;
+    private readonly titleNode: HTMLElement;
     /**
-     * цена
+     * ЦЕна товара
      */
-    protected readonly priceNode: HTMLElement;
+    private readonly priceNode: HTMLElement;
     /**
-     * ID товара
+     * категория товара
+     */
+    private readonly categoryNode: HTMLElement | null;
+    /**
+     * изображение товара
+     */
+    private readonly imageNode: HTMLImageElement | null;
+    /**
+     * описание товара
+     */
+    private readonly descriptionNode: HTMLElement | null;
+    /**
+     * Немер товара. Используется в корзине чтобы показать позицию в списке
+     */
+    private readonly indexNode: HTMLElement | null;
+    /**
+     * Кнопка (в карточке каталога это кронка добалвения в корзину, а в корзине - это кнопка удаления из корзины)
+     */
+    private readonly buttonNode: HTMLButtonElement | null;
+    /**
+     * ID отображаемого товара
      */
     protected productId: string;
 
     /**
-     * Констурктор принимает html верстку для представления и евент-менеджер
+     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
+     * Так же инициализирует поля класса
      */
     constructor(container: HTMLElement, protected events: IEvents) { }
     
     /**
-     * Сеттер для установки товара, который должен отобрадаться
+     * Устанавливает товар для отображения
      */
     set product(product: IProduct) { }
+    /**
+     * Устанавливает номер в списке (для отображения в корзине)
+     */
+    set index(index: number) {
+        this.setText(this.indexNode, String(index))
+    }
+    /**
+     * Включает/отключает кнопку
+     */
+    toggleButton(enable: boolean) {
+        this.buttonNode.disabled = !enable
+    }
 }
+
+
 ```
-
-
 ### Представления каталога
-
 
 #### Представление `CatalogView`
 
@@ -413,112 +446,7 @@ class CatalogView extends BaseView{
 }
 ```
 
-#### Представление `BaseCatalogProductView`
-
-Базовый класс для представлений товара в каталоге. Расширяет базовое представление товара и добавляет доп. поля и функционал
-
-```typescript
-class CatalogItemView extends BaseView{
-    /**
-     * Категория товара
-     */
-    protected readonly categoryNode: HTMLElement;
-    /**
-     * Избражение товара
-     */
-    protected readonly imageNode: HTMLImageElement;
-
-    /**
-     * Констурктор вызывает базовый конструктор и инициализирует поля своего класса
-     */
-    constructor(container: HTMLElement, events: IEvents) {}
-
-    /**
-     * Сеттер для установки товара, который должен отобрадаться.
-     * Вызывает родительской метод и так же устанавливает значения для полей своего класса
-     */
-    set product(product: IProduct) {}
-}
-```
-
-#### Представление `CatalogItemView`
-
-Карточка товара в каталоге с краткой информацией о товаре.
-
-```typescript
-class CatalogItemView extends BaseCatalogProductView {
-    /**
-     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий
-     */
-    constructor(container: HTMLElement, events: IEvents) {}
-}
-```
-
-#### Представление `ProductPreviewView`
-
-Карточка с полной информацией о товаре (показывается в попапе). В отличие от карточки в каталоге, эта содержит доп поля и бросает другие события
-
-```typescript
-class ProductPreviewView extends BaseCatalogProductView {
-    /**
-     * Описание товара
-     */
-    private readonly descriptionNode: HTMLElement
-   
-    /**
-     * Кнопка добавления в корзину
-     */
-    private readonly addToCartButtonNode: HTMLButtonElement
-   
-    /**
-     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
-     * Так же инициализирует поля своего класса
-     */
-    constructor(container: HTMLElement, events: IEvents) {}
-    
-    /**
-     * Устанавливает товар для отображения
-     */
-    set product(product: IProduct) {}
-    
-    /**
-     * Включает/выключает кнопку добавления в корзину
-     */
-    toggleAddToCartButton(enable:boolean){}
-}
-```
-
 ### Представления корзины
-
-#### Представление `CartItemView`
-
-Строчка в корзине. Представляет информацию об одной конкретной позиции в корзине. Расширяет базовое представление товара
-
-```typescript
-class CartItemView extends BaseProductView {
-    /**
-     * Порядковый номер записи в списке
-     */
-    private readonly indexNode: HTMLElement
-    /**
-     * Кнопка удаления из корзины
-     */
-    private readonly removeButtonNode: HTMLButtonElement;
-
-    /**
-     * Констурктор вызывает базовый конструктор и уснанавливает логику вызова событий.
-     * Так же инициализирует поля своего класса
-     */
-    constructor(container: HTMLElement, events: IEvents) {}
-
-    /**
-     * Устанавливает порядковый номер записи в списке
-     */
-    set index(index:number){
-        this.setText(this.indexNode,String(index))
-    }
-}
-```
 
 #### Представление `CartView`
 
@@ -564,7 +492,7 @@ class CartView extends BaseView {
 }
 ```
 
-#### Представление `CartView`
+#### Представление `CartIconView`
 
 Иконка корзины в шапке сайта, которая отображает количество товаров в корзине
 

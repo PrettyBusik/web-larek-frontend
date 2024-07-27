@@ -17,22 +17,20 @@ import {
     PurchaseStep2Event,
     TProductEvent
 } from "./components/base/events";
-import {CatalogItemView} from "./components/view/catalog/CatalogItemView";
 import {cloneTemplate} from "./utils/utils";
 import {CatalogView} from "./components/view/catalog/CatalogView";
 import {PopupView} from "./components/view/PopupView";
 import {CartModel} from "./components/data/CartModel";
 import {CartIconView} from "./components/view/cart/CartIconView";
 import {IProduct} from "./types";
-import {ProductPreviewView} from "./components/view/catalog/ProductPreviewView";
 import {CartView} from "./components/view/cart/CartView";
-import {CartItemView} from "./components/view/cart/CartItemView";
 import {Step1View} from "./components/view/purchase/Step1View";
 import {PurchaseModel} from "./components/data/PurchaseModel";
 import {Step2View} from "./components/view/purchase/Step2View";
 import {SuccessMessageView} from "./components/view/purchase/SuccessMessageView";
 import {CatalogModel} from "./components/data/CatalogModel";
 import {RestApi} from "./components/common/RestApi";
+import {ProductView} from "./components/view/ProductView";
 
 // Common objects
 const api = new RestApi(API_URL, CDN_URL);
@@ -62,10 +60,9 @@ events.on(EVENT_PRODUCT_SHOW_PREVIEW, (data: TProductEvent) => {
     const product = catalogModel.getProductById(data.id)
     const doesAlreadyExist= cartModel.doesAlreadyExist(product.id);
 
-    const previewView = new ProductPreviewView(cloneTemplate("#card-preview"), events);
+    const previewView = new ProductView(cloneTemplate("#card-preview"), events);
     previewView.product = product;
-    previewView.toggleAddToCartButton(product.price > 0);
-    previewView.toggleAddToCartButton(!doesAlreadyExist);
+    previewView.toggleButton(product.price > 0 && !doesAlreadyExist);
 
     popupView.content = previewView.render();
 
@@ -78,7 +75,7 @@ events.on(EVENT_CART_SHOW, () => {
     const itemNodes: HTMLElement[] = [];
 
     cartModel.products.forEach((product: IProduct, index: number) => {
-        const productView = new CartItemView(cloneTemplate('#card-basket'), events);
+        const productView = new ProductView(cloneTemplate('#card-basket'), events);
         productView.product = product
         productView.index = index + 1
         itemNodes.push(productView.render())
@@ -97,6 +94,7 @@ events.on(EVENT_CART_ADD_PRODUCT, (data: TProductEvent) => {
     const product = catalogModel.getProductById(data.id)
     cartModel.addProduct(product)
     cartIconView.counterValue = cartModel.products.length
+    events.emit(EVENT_POPUP_HIDE)
 })
 
 events.on(EVENT_CART_REMOVE_PRODUCT, (data: TProductEvent) => {
@@ -170,7 +168,7 @@ api
         catalogModel
             .products
             .map((product: IProduct) => {
-                const productView = new CatalogItemView(cloneTemplate("#card-catalog"), events);
+                const productView = new ProductView(cloneTemplate("#card-catalog"), events);
                 productView.product = product
                 productNodes.push(productView.render())
             })
