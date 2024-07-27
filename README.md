@@ -417,15 +417,11 @@ class PopupView extends BaseView {
     /**
      * Устанавливает номер в списке (для отображения в корзине)
      */
-    set index(index: number) {
-        this.setText(this.indexNode, String(index))
-    }
+    set index(index: number) {}
     /**
      * Включает/отключает кнопку
      */
-    toggleButton(enable: boolean) {
-        this.buttonNode.disabled = !enable
-    }
+    toggleButton(enable: boolean) { }
 }
 
 
