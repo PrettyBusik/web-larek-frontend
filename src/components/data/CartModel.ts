@@ -18,7 +18,7 @@ export class CartModel {
     }
 
     addProduct(product: IProduct) {
-        const doesAlreadyExist = this.products.some((item: IProduct) => item.id === product.id)
+        const doesAlreadyExist = this.doesAlreadyExist(product.id);
         if (doesAlreadyExist) {
             return
         }
@@ -30,6 +30,10 @@ export class CartModel {
         this.productsList = this.productsList.filter((element) => {
             return element.id !== productId
         })
+    }
+
+    doesAlreadyExist(productId:string):boolean{
+     return this.productsList.some((item: IProduct) => item.id === productId);
     }
 
     clear(): void {

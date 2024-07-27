@@ -19,7 +19,7 @@ export class PurchaseModel implements IDeliveryAndPayment, IContacts {
     }
 
     validateDeliveryAndPayment(): TValidationErrors<IDeliveryAndPayment> | null {
-        const errors: TValidationErrors<IDeliveryAndPayment> = {}
+        const errors: TValidationErrors<IDeliveryAndPayment> = {};
         let isValid = true;
 
         if (this.address.trim() === '') {

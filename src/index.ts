@@ -60,14 +60,16 @@ events.on(EVENT_POPUP_HIDE, () => popupView.hide())
 
 events.on(EVENT_PRODUCT_SHOW_PREVIEW, (data: TProductEvent) => {
     const product = catalogModel.getProductById(data.id)
+    const doesAlreadyExist= cartModel.doesAlreadyExist(product.id);
 
     const previewView = new ProductPreviewView(cloneTemplate("#card-preview"), events);
     previewView.product = product;
-    previewView.toggleAddToCartButton(product.price > 0)
+    previewView.toggleAddToCartButton(product.price > 0);
+    previewView.toggleAddToCartButton(!doesAlreadyExist);
 
     popupView.content = previewView.render();
 
-    events.emit(EVENT_POPUP_SHOW)
+    events.emit(EVENT_POPUP_SHOW);
 })
 
 // Cart events handling
